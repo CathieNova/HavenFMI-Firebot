@@ -1,56 +1,57 @@
-# HavenFMI-Firebot
+# Haven Minecraft Integration Firebot Script
 
 Firebot startup script for Haven Minecraft Integration.
 
-It lets Firebot send Minecraft actions to a linked player through the HavenFMI server bridge.
+It adds Minecraft effects, events, variables, filters, viewer quests, and settings to Firebot.
 
-You can use it for chat commands, Channel Point Redemptions, Power-Ups, timed effects, viewer quests, bossbars, player messages, and custom Firebot setups.
+You can use it for chat commands, Channel Point Redemptions, Power-Ups, timers, buttons, viewer quests, bossbars, player messages, and custom Firebot setups.
 
 ---
 
-## How to install
+## Docs
 
-1. Put `havenMinecraftIntegration.js` in your Firebot startup scripts folder.
-   Usually here:
-   ```text
-   C:\Users\YOURUSERNAME\AppData\Roaming\Firebot\v5\profiles\Main\scripts
-   ```
-2. Restart Firebot.
-3. Install the HavenFMI server mod on your Minecraft server.
-4. Start the Minecraft server.
-5. Open **Haven Minecraft** in Firebot.
-6. Set **Minecraft Server Address**.
-   ```text
-   http://127.0.0.1:8765
-   ```
-   If Firebot and the Minecraft server are on the same PC, keep `127.0.0.1`.
+Full setup and usage docs are here:
 
-   If Firebot connects to another PC or hosted server, replace `SERVERIPHERE` with the server IP or domain:
-   ```text
-   http://SERVERIPHERE:8765
-   ```
-7. Paste your **Player Code**.
-8. Select your Minecraft version.
-9. Click **Save**.
-10. Click **Test Connection**.
+https://cathienova.github.io/HavenFMI-Docs/
+
+---
+
+## Requirements
+
+* Firebot v5
+* Minecraft 1.21.1 server
+* Haven Minecraft Integration server mod
+* A whitelisted Minecraft player with a Player Code
+
+---
+
+## Install
+
+1. Download `havenMinecraftIntegration.js` from Releases.
+2. Put the script in your Firebot startup scripts directory.
+3. Restart Firebot.
+4. Open **Haven Minecraft** in Firebot.
+5. Set the Minecraft server address.
+6. Paste your Player Code.
+7. Save the settings.
+8. Click **Test Connection**.
+
+Default Minecraft server address:
+
+```text
+http://127.0.0.1:8765
+```
+
+Use `127.0.0.1` when Firebot and the Minecraft server are on the same PC.
 
 ---
 
 ## Player Code
 
-A server owner or staff member with permission needs to whitelist your Minecraft name first.
+A server owner or staff member needs to whitelist your Minecraft name first.
 
-Server console:
-```text
-firebot whitelist add YOURMINECRAFTNAME
-```
+After that, join the server and run:
 
-In-game:
-```text
-/firebot whitelist add YOURMINECRAFTNAME
-```
-
-After your name is whitelisted, join the server and run:
 ```text
 /firebot code
 ```
@@ -58,5 +59,3 @@ After your name is whitelisted, join the server and run:
 Paste the code into **Haven Minecraft** in Firebot.
 
 Do not show your Player Code on stream.
-
----
