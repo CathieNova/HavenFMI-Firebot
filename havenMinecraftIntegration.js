@@ -159,7 +159,7 @@ const QUEST_COMMAND_REWARD_EXAMPLES = [
     { label: "Title", note: "Command reward Display Name: Receive a title message.", value: "title $minecraftQuestPlayerName title {\"text\":\"Quest Complete!\",\"color\":\"gold\"}" }
 ];
 
-const MINECRAFT_VERSIONS = ["1.20.1 Forge", "1.21.1 NeoForge"];
+const MINECRAFT_VERSIONS = ["1.21.1 NeoForge"];
 
 const DEFAULT_RANDOM_MOBS = [
     "minecraft:zombie | {Tags:[\"Viewer Spawn\"],CustomName:'{\"text\":\"$userDisplayName\",\"color\":\"gold\"}',CustomNameVisible:1b,PersistenceRequired:1b,DeathLootTable:\"minecraft:empty\"}",
@@ -2626,7 +2626,7 @@ function playerCodeInput() {
 function makeSettingsPageController() {
     const body = `
                     const fallbackConfig = ${JSON.stringify(DEFAULT_CONFIG)};
-                    $scope.minecraftVersions = ["1.20.1 Forge", "1.21.1 NeoForge"];
+                    $scope.minecraftVersions = ["1.21.1 NeoForge"];
                     $scope.config = angular.copy(fallbackConfig);
                     $scope.limitsText = "Request Limits From Server";
                     $scope.statsText = "Request Statistics From Server";
