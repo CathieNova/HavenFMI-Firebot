@@ -138,6 +138,22 @@ const QUEST_OBJECTIVE_EXAMPLES = {
     ]
 };
 
+const QUEST_OBJECTIVE_EXAMPLES_2612 = {
+    ...QUEST_OBJECTIVE_EXAMPLES,
+    "Kill Specific Mob": [
+        { label: "Single mob", note: "Only zombies count.", value: "Mobs To Kill: 10\nMob IDs: minecraft:zombie" },
+        { label: "Mob tag", note: "Any mob in the tag counts.", value: "Mobs To Kill: 5\nMob IDs: #minecraft:raiders" },
+        { label: "Named event mob", note: "Only mobs with matching data count.", value: "Mobs To Kill: 1\nMob IDs: minecraft:skeleton | {Tags:[\"Viewer Spawn\"],CustomName:{text:'$userDisplayName'}}" }
+    ]
+};
+
+const QUEST_ITEM_REWARD_EXAMPLES_1192 = [
+    { label: "Named item", note: "Put this in Item Data.", value: "{display:{Name:'{\"text\":\"Viewer Stick\",\"color\":\"gold\"}'}}" },
+    { label: "Lore", note: "Put this in Item Data.", value: "{display:{Lore:['{\"text\":\"Redeemed on stream\",\"color\":\"gray\"}']}}" },
+    { label: "Enchantment", note: "Put this in Item Data.", value: "{Enchantments:[{id:\"minecraft:unbreaking\",lvl:3s}]}" },
+    { label: "Named enchanted item", note: "Put this in Item Data.", value: "{display:{Name:'{\"text\":\"Viewer Pickaxe\",\"color\":\"aqua\"}'},Enchantments:[{id:\"minecraft:efficiency\",lvl:5s}]}" }
+];
+
 const QUEST_ITEM_REWARD_EXAMPLES_1201 = [
     { label: "Named item", note: "Put this in Item Data.", value: "{display:{Name:'{\"text\":\"Viewer Stick\",\"color\":\"gold\"}'}}" },
     { label: "Lore", note: "Put this in Item Data.", value: "{display:{Lore:['{\"text\":\"Redeemed on stream\",\"color\":\"gray\"}']}}" },
@@ -152,6 +168,13 @@ const QUEST_ITEM_REWARD_EXAMPLES_1211 = [
     { label: "Named enchanted item", note: "Put this in Item Data.", value: "[custom_name='{\"text\":\"Viewer Pickaxe\",\"color\":\"aqua\"}',enchantments={levels:{\"minecraft:efficiency\":5}}]" }
 ];
 
+const QUEST_ITEM_REWARD_EXAMPLES_2612 = [
+    { label: "Named item", note: "Put this in Item Data.", value: "[custom_name={text:'Viewer Stick',color:'gold'}]" },
+    { label: "Lore", note: "Put this in Item Data.", value: "[lore=[{text:'Redeemed on stream',color:'gray'}]]" },
+    { label: "Enchantment", note: "Put this in Item Data.", value: "[enchantments={levels:{\"minecraft:unbreaking\":3}}]" },
+    { label: "Named enchanted item", note: "Put this in Item Data.", value: "[custom_name={text:'Viewer Pickaxe',color:'aqua'},enchantments={levels:{\"minecraft:efficiency\":5}}]" }
+];
+
 const QUEST_COMMAND_REWARD_EXAMPLES = [
     { label: "Potion effect", note: "Command reward Display Name: Receive Haste 3 for 10 seconds.", value: "effect give $minecraftQuestPlayerName minecraft:haste 10 2 true" },
     { label: "XP reward", note: "Command reward Display Name: Receive 5 levels.", value: "xp add $minecraftQuestPlayerName 5 levels" },
@@ -159,7 +182,7 @@ const QUEST_COMMAND_REWARD_EXAMPLES = [
     { label: "Title", note: "Command reward Display Name: Receive a title message.", value: "title $minecraftQuestPlayerName title {\"text\":\"Quest Complete!\",\"color\":\"gold\"}" }
 ];
 
-const MINECRAFT_VERSIONS = ["1.21.1 NeoForge"];
+const MINECRAFT_VERSIONS = ["Forge 1.19.2", "Forge 1.20.1", "NeoForge 1.21.1", "NeoForge 26.1.2"];
 
 const DEFAULT_RANDOM_MOBS = [
     "minecraft:zombie | {Tags:[\"Viewer Spawn\"],CustomName:'{\"text\":\"$userDisplayName\",\"color\":\"gold\"}',CustomNameVisible:1b,PersistenceRequired:1b,DeathLootTable:\"minecraft:empty\"}",
@@ -198,7 +221,7 @@ const DEFAULT_BAD_EFFECTS = [
 const DEFAULT_CONFIG = {
     serverAddress: "http://127.0.0.1:8765",
     requestTimeoutMs: 5000,
-    minecraftVersion: "1.21.1 NeoForge",
+    minecraftVersion: "NeoForge 1.21.1",
     playerCode: "",
     fetchedLimits: null,
     fetchedStats: null
@@ -606,7 +629,7 @@ function randomItemRowsFromEffect(effect, config) {
             itemData: String(item && item.itemData || "").trim()
         })).filter(item => item.itemId);
     }
-    const fallback = config.minecraftVersion === "1.20.1 Forge" ? DEFAULT_RANDOM_ITEMS_1201 : DEFAULT_RANDOM_ITEMS_1211;
+    const fallback = String(config.minecraftVersion || "").startsWith("Forge") ? DEFAULT_RANDOM_ITEMS_1201 : DEFAULT_RANDOM_ITEMS_1211;
     return randomItemRowsFromList(effect.itemListOverride || fallback.join("\n"));
 }
 
@@ -1370,7 +1393,7 @@ function exampleBlock(key, title, examples) {
     `;
 }
 
-function versionedExampleBlock(key, title, forgeExamples, neoForgeExamples) {
+function versionedExampleBlock(key, title, examples1192, examples1201, examples1211, examples2612) {
     return `
         <button type="button" class="haven-minecraft-examples-toggle" ng-click="effectHelp.${key}=!effectHelp.${key}">Show Examples</button>
         <div class="haven-minecraft-examples" ng-if="effectHelp.${key}">
@@ -1378,11 +1401,17 @@ function versionedExampleBlock(key, title, forgeExamples, neoForgeExamples) {
                 <div class="haven-minecraft-examples-title">${title} - {{minecraftVersion}}</div>
                 <button type="button" class="haven-minecraft-examples-close" ng-click="effectHelp.${key}=false">Close</button>
             </div>
-            <div ng-if="minecraftVersion === '1.20.1 Forge'">
-                ${exampleItems(forgeExamples)}
+            <div ng-if="minecraftVersion === 'Forge 1.19.2'">
+                ${exampleItems(examples1192)}
             </div>
-            <div ng-if="minecraftVersion !== '1.20.1 Forge'">
-                ${exampleItems(neoForgeExamples)}
+            <div ng-if="minecraftVersion === 'Forge 1.20.1'">
+                ${exampleItems(examples1201)}
+            </div>
+            <div ng-if="minecraftVersion === 'NeoForge 1.21.1'">
+                ${exampleItems(examples1211)}
+            </div>
+            <div ng-if="minecraftVersion === 'NeoForge 26.1.2'">
+                ${exampleItems(examples2612)}
             </div>
         </div>
     `;
@@ -1556,17 +1585,24 @@ function defaultsController(defaults) {
     const defaultsJson = JSON.stringify(defaults);
     const questTypesJson = JSON.stringify(QUEST_TYPES);
     const questObjectiveExamplesJson = JSON.stringify(QUEST_OBJECTIVE_EXAMPLES);
+    const questObjectiveExamples2612Json = JSON.stringify(QUEST_OBJECTIVE_EXAMPLES_2612);
+    const questItemRewardExamples1192Json = JSON.stringify(QUEST_ITEM_REWARD_EXAMPLES_1192);
     const questItemRewardExamples1201Json = JSON.stringify(QUEST_ITEM_REWARD_EXAMPLES_1201);
     const questItemRewardExamples1211Json = JSON.stringify(QUEST_ITEM_REWARD_EXAMPLES_1211);
+    const questItemRewardExamples2612Json = JSON.stringify(QUEST_ITEM_REWARD_EXAMPLES_2612);
     const questCommandRewardExamplesJson = JSON.stringify(QUEST_COMMAND_REWARD_EXAMPLES);
     const controller = function() {};
     controller.toString = () => `["$scope", "backendCommunicator", function($scope, backendCommunicator) {
         const defaults = ${defaultsJson};
         const questTypes = ${questTypesJson};
         const questObjectiveExamples = ${questObjectiveExamplesJson};
+        const questObjectiveExamples2612 = ${questObjectiveExamples2612Json};
+        const questItemRewardExamples1192 = ${questItemRewardExamples1192Json};
         const questItemRewardExamples1201 = ${questItemRewardExamples1201Json};
         const questItemRewardExamples1211 = ${questItemRewardExamples1211Json};
+        const questItemRewardExamples2612 = ${questItemRewardExamples2612Json};
         const questCommandRewardExamples = ${questCommandRewardExamplesJson};
+        const objectiveTargetKinds = new WeakMap();
         if ($scope.effect == null) {
             $scope.effect = {};
         }
@@ -1585,7 +1621,7 @@ function defaultsController(defaults) {
         if ($scope.effectHelp.rewardExamples == null) {
             $scope.effectHelp.rewardExamples = {};
         }
-        $scope.minecraftVersion = "1.21.1 NeoForge";
+        $scope.minecraftVersion = "NeoForge 1.21.1";
         $scope.questTypes = questTypes;
         function usesTargets(questType) {
             const value = String(questType || "");
@@ -1713,8 +1749,7 @@ function defaultsController(defaults) {
             const result = {
                 questType,
                 targetAmount: Number(source.targetAmount) || 10,
-                collapsed: source.collapsed === true,
-                lastTargetKind: source.lastTargetKind || targetKind(questType)
+                collapsed: source.collapsed === true
             };
             if (usesTargets(questType)) {
                 result.targetIds = source.targetIds || "";
@@ -1926,15 +1961,24 @@ function defaultsController(defaults) {
                     rows: questCommandRewardExamples
                 };
             }
+            let rows = questItemRewardExamples1211;
+            if ($scope.minecraftVersion === "Forge 1.19.2") {
+                rows = questItemRewardExamples1192;
+            } else if ($scope.minecraftVersion === "Forge 1.20.1") {
+                rows = questItemRewardExamples1201;
+            } else if ($scope.minecraftVersion === "NeoForge 26.1.2") {
+                rows = questItemRewardExamples2612;
+            }
             return {
                 title: "Item Data Examples - " + $scope.minecraftVersion,
-                rows: $scope.minecraftVersion === "1.20.1 Forge" ? questItemRewardExamples1201 : questItemRewardExamples1211
+                rows
             };
         }
         function objectiveExamplesFor(questType) {
+            const examples = $scope.minecraftVersion === "NeoForge 26.1.2" ? questObjectiveExamples2612 : questObjectiveExamples;
             return {
                 title: "Examples - " + String(questType || "Objective"),
-                rows: questObjectiveExamples[questType] || questObjectiveExamples["Jump Count"] || []
+                rows: examples[questType] || examples["Jump Count"] || []
             };
         }
         $scope.toggleRewardExamples = function(index, rewardType) {
@@ -2072,13 +2116,17 @@ function defaultsController(defaults) {
                 default: return "Amount needed to finish the quest.";
             }
         };
-        $scope.$watchCollection("effect.objectives", function(objectives) {
+        $scope.$watch("effect.objectives", function(objectives) {
             (objectives || []).forEach(function(objective) {
+                if (!objective || questTypes.indexOf(objective.questType) < 0) {
+                    return;
+                }
                 const kind = targetKind(objective.questType);
-                if (objective.lastTargetKind !== undefined && objective.lastTargetKind !== kind) {
+                const previousKind = objectiveTargetKinds.get(objective);
+                if (previousKind !== undefined && previousKind !== kind) {
                     objective.targetIds = "";
                 }
-                objective.lastTargetKind = kind;
+                objectiveTargetKinds.set(objective, kind);
                 if (!usesTargets(objective.questType)) {
                     objective.targetIds = "";
                 }
@@ -2087,7 +2135,7 @@ function defaultsController(defaults) {
                     objective.damageFilter = "Any";
                 }
             });
-        });
+        }, true);
         function setQuestPresetStatus(message, failed) {
             $scope.effectHelp.questPresetMessage = message || "";
             $scope.effectHelp.questPresetFailed = failed === true;
@@ -2290,6 +2338,7 @@ function registerEffects() {
         { label: "Skeleton without bow", note: "Adds a helmet and removes the bow when combined with shared random mob data.", value: "minecraft:skeleton | {HandItems:[{},{}],ArmorItems:[{},{},{},{Count:1,id:\"minecraft:diamond_helmet\"}]}" },
         { label: "Piglin brute event mob", note: "Keeps the brute from zombifying and gives it a weapon.", value: "minecraft:piglin_brute | {Tags:[\"Viewer Spawn\"],IsImmuneToZombification:1b,HandItems:[{Count:1,id:\"minecraft:golden_axe\"},{}],ArmorItems:[{},{},{},{Count:1,id:\"minecraft:diamond_helmet\"}],CustomName:'{\"text\":\"$userDisplayName\",\"color\":\"gold\"}',PersistenceRequired:1b,DeathLootTable:\"minecraft:empty\"}" }
     ];
+    const spawnMobExamples1192 = spawnMobExamples1201;
     const spawnMobExamples1211 = [
         { label: "Viewer name", note: "Names the mob after the viewer and keeps it from despawning.", value: "{Tags:[\"Viewer Spawn\"],CustomName:'{\"text\":\"$userDisplayName\",\"color\":\"gold\"}',CustomNameVisible:1b,PersistenceRequired:1b}" },
         { label: "No loot", note: "Stops normal loot drops.", value: "{DeathLootTable:\"minecraft:empty\"}" },
@@ -2297,15 +2346,28 @@ function registerEffects() {
         { label: "Skeleton without bow", note: "Adds a helmet and removes the bow when combined with shared random mob data.", value: "minecraft:skeleton | {HandItems:[{},{}],ArmorItems:[{},{},{},{id:\"minecraft:diamond_helmet\",count:1}]}" },
         { label: "Piglin brute event mob", note: "Keeps the brute from zombifying and gives it a weapon.", value: "minecraft:piglin_brute | {Tags:[\"Viewer Spawn\"],IsImmuneToZombification:1b,HandItems:[{id:\"minecraft:golden_axe\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:diamond_helmet\",count:1}],CustomName:'{\"text\":\"$userDisplayName\",\"color\":\"gold\"}',PersistenceRequired:1b,DeathLootTable:\"minecraft:empty\"}" }
     ];
+    const spawnMobExamples2612 = [
+        { label: "Viewer name", note: "Names the mob after the viewer and keeps it from despawning.", value: "{Tags:[\"Viewer Spawn\"],CustomName:{text:'$userDisplayName',color:'gold'},CustomNameVisible:1b,PersistenceRequired:1b}" },
+        { label: "No loot", note: "Stops normal loot drops.", value: "{DeathLootTable:\"minecraft:empty\"}" },
+        { label: "Sun-safe undead", note: "Gives undead a helmet and prevents armor drops.", value: "{ArmorItems:[{},{},{},{id:\"minecraft:diamond_helmet\",count:1}],ArmorDropChances:[0.0f,0.0f,0.0f,0.0f]}" },
+        { label: "Skeleton without bow", note: "Adds a helmet and removes the bow when combined with shared random mob data.", value: "minecraft:skeleton | {HandItems:[{},{}],ArmorItems:[{},{},{},{id:\"minecraft:diamond_helmet\",count:1}]}" },
+        { label: "Piglin brute event mob", note: "Keeps the brute from zombifying and gives it a weapon.", value: "minecraft:piglin_brute | {Tags:[\"Viewer Spawn\"],IsImmuneToZombification:1b,HandItems:[{id:\"minecraft:golden_axe\",count:1},{}],ArmorItems:[{},{},{},{id:\"minecraft:diamond_helmet\",count:1}],CustomName:{text:'$userDisplayName',color:'gold'},PersistenceRequired:1b,DeathLootTable:\"minecraft:empty\"}" }
+    ];
     const itemExamples1201 = [
         { label: "Named item", note: "Gives the item a colored custom name.", value: "{display:{Name:'{\"text\":\"Viewer Gift\",\"color\":\"gold\"}'}}" },
         { label: "Bonk stick", note: "Adds a name and knockback.", value: "minecraft:stick | {display:{Name:'{\"text\":\"Bonk Stick\",\"color\":\"red\"}'},Enchantments:[{id:\"minecraft:knockback\",lvl:2s}]}" },
         { label: "Lore", note: "Adds one short lore line.", value: "{display:{Lore:['{\"text\":\"Redeemed on stream\",\"color\":\"gray\"}']}}" }
     ];
+    const itemExamples1192 = itemExamples1201;
     const itemExamples1211 = [
         { label: "Named item", note: "Gives the item a colored custom name.", value: "[custom_name='{\"text\":\"Viewer Gift\",\"color\":\"gold\"}']" },
         { label: "Bonk stick", note: "Adds a name and knockback.", value: "minecraft:stick | [custom_name='{\"text\":\"Bonk Stick\",\"color\":\"red\"}',enchantments={levels:{\"minecraft:knockback\":2}}]" },
         { label: "Lore", note: "Adds one short lore line.", value: "[lore=['{\"text\":\"Redeemed on stream\",\"color\":\"gray\"}']]" }
+    ];
+    const itemExamples2612 = [
+        { label: "Named item", note: "Gives the item a colored custom name.", value: "[custom_name={text:'Viewer Gift',color:'gold'}]" },
+        { label: "Bonk stick", note: "Adds a name and knockback.", value: "minecraft:stick | [custom_name={text:'Bonk Stick',color:'red'},enchantments={levels:{\"minecraft:knockback\":2}}]" },
+        { label: "Lore", note: "Adds one short lore line.", value: "[lore=[{text:'Redeemed on stream',color:'gray'}]]" }
     ];
     const itemIdExamples = [
         { label: "Single item", note: "Matches one item.", value: "minecraft:stick" },
@@ -2327,7 +2389,9 @@ function registerEffects() {
         { label: "Named mob", note: "Use data when the mob must have matching custom data.", value: "minecraft:zombie | {CustomName:'{\"text\":\"Boss Zombie\"}'}" }
     ];
     const potionExamples1201 = ["minecraft:speed", "minecraft:slowness", "minecraft:haste", "minecraft:mining_fatigue", "minecraft:strength", "minecraft:instant_health", "minecraft:instant_damage", "minecraft:jump_boost", "minecraft:nausea", "minecraft:regeneration", "minecraft:resistance", "minecraft:fire_resistance", "minecraft:water_breathing", "minecraft:invisibility", "minecraft:blindness", "minecraft:night_vision", "minecraft:hunger", "minecraft:weakness", "minecraft:poison", "minecraft:wither", "minecraft:levitation", "minecraft:glowing", "minecraft:darkness"];
+    const potionExamples1192 = potionExamples1201;
     const potionExamples1211 = ["minecraft:speed", "minecraft:slowness", "minecraft:haste", "minecraft:mining_fatigue", "minecraft:strength", "minecraft:instant_health", "minecraft:instant_damage", "minecraft:jump_boost", "minecraft:nausea", "minecraft:regeneration", "minecraft:resistance", "minecraft:fire_resistance", "minecraft:water_breathing", "minecraft:invisibility", "minecraft:blindness", "minecraft:night_vision", "minecraft:hunger", "minecraft:weakness", "minecraft:poison", "minecraft:wither", "minecraft:levitation", "minecraft:glowing", "minecraft:darkness", "minecraft:wind_charged", "minecraft:weaving", "minecraft:oozing", "minecraft:infested", "minecraft:raid_omen", "minecraft:trial_omen", "minecraft:bad_omen"];
+    const potionExamples2612 = potionExamples1211;
 
     registerEffect(makeEffect(
         "spawn-mob",
@@ -2347,7 +2411,7 @@ function registerEffects() {
         <eos-container header="Entity Data" pad-top="true">
             ${note("Optional data for names, equipment, loot, tags, and modded values. Use Viewer Spawn inside Tags to tag mobs for Bring Tagged Mobs.")}
             ${textArea("Entity Data", "entityData", "Optional entity data", "Optional entity data for names, equipment, baby state, or modded entity data.")}
-            ${versionedExampleBlock("entityData", "Entity Data Examples", spawnMobExamples1201, spawnMobExamples1211)}
+            ${versionedExampleBlock("entityData", "Entity Data Examples", spawnMobExamples1192, spawnMobExamples1201, spawnMobExamples1211, spawnMobExamples2612)}
         </eos-container>`,
         { amount: 1, offsetX: 0, offsetY: 0, offsetZ: 0, entityData: "" },
         "spawn_mob",
@@ -2397,7 +2461,7 @@ function registerEffects() {
                 </div>
             </div>
             <button type="button" class="haven-minecraft-small-button" ng-click="addRandomMob()"><i class="far fa-plus"></i> Add Mob</button>
-            ${versionedExampleBlock("randomEntityData", "Random Mob Examples", spawnMobExamples1201, spawnMobExamples1211)}
+            ${versionedExampleBlock("randomEntityData", "Random Mob Examples", spawnMobExamples1192, spawnMobExamples1201, spawnMobExamples1211, spawnMobExamples2612)}
         </eos-container>`,
         { randomMobs: randomMobRowsFromList(DEFAULT_RANDOM_MOBS.join("\n")) },
         "spawn_random_mob",
@@ -2444,7 +2508,7 @@ function registerEffects() {
             </div>
             ${checkboxField("Use Blacklist", "useBlacklist", "Blocks items from being given by this effect.")}
             <div ng-if="effect.useBlacklist">${textArea("Blacklisted Items", "blacklistedItems", "minecraft:diamond\nminecraft:netherite_ingot", "One blocked item ID per line.")}</div>
-            ${versionedExampleBlock("itemData", "Give Item Examples", itemExamples1201, itemExamples1211)}
+            ${versionedExampleBlock("itemData", "Give Item Examples", itemExamples1192, itemExamples1201, itemExamples1211, itemExamples2612)}
         </eos-container>`,
         { useRandomItem: false, useBlacklist: false, blacklistedItems: "", amount: 1, itemData: "", randomItems: randomItemRowsFromList(DEFAULT_RANDOM_ITEMS_1211.join("\n")) },
         "give_item",
@@ -2471,8 +2535,8 @@ function registerEffects() {
     registerEffect(makeEffect("heal-player", "Heal Player", "Heals the player.", `${targetTemplate()}<eos-container header="Heal" pad-top="true">${numberInput("Amount", "amount", "4", "Health points to restore. 20 equals 10 hearts.")}</eos-container>`, { amount: 4 }, "heal_player", ["amount"]));
     registerEffect(makeEffect("feed-player", "Feed Player", "Feeds the player.", `${targetTemplate()}<eos-container header="Food" pad-top="true">${numberInput("Amount", "amount", "10", "Food points to restore. 20 equals a full food bar.")}</eos-container>`, { amount: 10 }, "feed_player", ["amount"]));
     registerEffect(makeEffect("set-player-on-fire", "Set Player On Fire", "Sets the player on fire.", `${targetTemplate()}<eos-container header="Fire" pad-top="true">${numberInput("Seconds", "seconds", "5", "How long the player should burn.")}</eos-container>`, { seconds: 5 }, "set_player_on_fire", ["seconds"]));
-    registerEffect(makeEffect("add-potion-effect", "Add Potion Effect", "Adds a potion effect to the player.", `${targetTemplate()}<eos-container header="Effect" pad-top="true">${textInput("Effect ID", "effectId", "minecraft:slowness", "Potion effect ID, such as minecraft:slowness or modid:custom_effect.")}${versionedExampleBlock("effectId", "Common Effect IDs", potionExamples1201, potionExamples1211)}${numberInput("Seconds", "seconds", "10", "How long the effect should last.")}${numberInput("Amplifier", "amplifier", "0", "Effect level minus one. 0 means level 1.")}${checkboxField("Hide Particles", "hideParticles", "Hides the visible potion particles.")}</eos-container>`, { seconds: 10, amplifier: 0, hideParticles: false }, "add_potion_effect", ["effectId", "seconds", "amplifier", "hideParticles"]));
-    registerEffect(makeEffect("remove-potion-effect", "Remove Potion Effect", "Removes a potion effect from the player.", `${targetTemplate()}<eos-container header="Effect" pad-top="true">${checkboxField("Use Random Bad Effect", "useRandomEffect", "Picks one effect from this effect's list.")}<div ng-hide="effect.useRandomEffect">${textInput("Effect ID", "effectId", "minecraft:slowness", "Potion effect ID to remove.")}</div><div ng-if="effect.useRandomEffect">${textArea("Bad Effects List", "badEffectsOverride", "minecraft:poison", "One effect ID per line.")}</div>${versionedExampleBlock("removeEffectId", "Common Effect IDs", potionExamples1201, potionExamples1211)}</eos-container>`, { useRandomEffect: false, badEffectsOverride: DEFAULT_BAD_EFFECTS.join("\n") }, "remove_potion_effect", ["useRandomEffect", "badEffectsOverride"], effect => ({ effectId: effect.useRandomEffect ? pickRandom(effect.badEffectsOverride || DEFAULT_BAD_EFFECTS) : effect.effectId })));
+    registerEffect(makeEffect("add-potion-effect", "Add Potion Effect", "Adds a potion effect to the player.", `${targetTemplate()}<eos-container header="Effect" pad-top="true">${textInput("Effect ID", "effectId", "minecraft:slowness", "Potion effect ID, such as minecraft:slowness or modid:custom_effect.")}${versionedExampleBlock("effectId", "Common Effect IDs", potionExamples1192, potionExamples1201, potionExamples1211, potionExamples2612)}${numberInput("Seconds", "seconds", "10", "How long the effect should last.")}${numberInput("Amplifier", "amplifier", "0", "Effect level minus one. 0 means level 1.")}${checkboxField("Hide Particles", "hideParticles", "Hides the visible potion particles.")}</eos-container>`, { seconds: 10, amplifier: 0, hideParticles: false }, "add_potion_effect", ["effectId", "seconds", "amplifier", "hideParticles"]));
+    registerEffect(makeEffect("remove-potion-effect", "Remove Potion Effect", "Removes a potion effect from the player.", `${targetTemplate()}<eos-container header="Effect" pad-top="true">${checkboxField("Use Random Bad Effect", "useRandomEffect", "Picks one effect from this effect's list.")}<div ng-hide="effect.useRandomEffect">${textInput("Effect ID", "effectId", "minecraft:slowness", "Potion effect ID to remove.")}</div><div ng-if="effect.useRandomEffect">${textArea("Bad Effects List", "badEffectsOverride", "minecraft:poison", "One effect ID per line.")}</div>${versionedExampleBlock("removeEffectId", "Common Effect IDs", potionExamples1192, potionExamples1201, potionExamples1211, potionExamples2612)}</eos-container>`, { useRandomEffect: false, badEffectsOverride: DEFAULT_BAD_EFFECTS.join("\n") }, "remove_potion_effect", ["useRandomEffect", "badEffectsOverride"], effect => ({ effectId: effect.useRandomEffect ? pickRandom(effect.badEffectsOverride || DEFAULT_BAD_EFFECTS) : effect.effectId })));
     registerEffect(makeEffect("clear-bad-effects", "Clear Bad Effects", "Clears bad effects from the player.", `${targetTemplate()}<eos-container header="Effects" pad-top="true">${textArea("Bad Effects List", "badEffectsOverride", "minecraft:poison", "One effect ID per line. These effects will be cleared from the player.")}</eos-container>`, { badEffectsOverride: DEFAULT_BAD_EFFECTS.join("\n") }, "clear_bad_effects", ["badEffectsOverride"], effect => ({ effects: toLines(effect.badEffectsOverride || DEFAULT_BAD_EFFECTS) })));
 
     registerEffect(makeEffect("teleport-player", "Teleport Player", "Teleports the player.", `${targetTemplate()}<eos-container header="Teleport" pad-top="true">${checkboxField("Use Random Range", "useRandomRange", "Teleports the player randomly near their current position.")}<div ng-hide="effect.useRandomRange">${note("Fixed offsets move the player from where they are now. 0 keeps that axis unchanged.")}${numberInput("Offset X", "offsetX", "0", "Blocks east or west from the player.")}${numberInput("Offset Y", "offsetY", "0", "Blocks up or down from the player.")}${numberInput("Offset Z", "offsetZ", "0", "Blocks north or south from the player.")}</div><div ng-if="effect.useRandomRange">${note("Leave X, Y, and Z unchecked to use Max Radius. Turn on axes when you want a controlled random offset.")}${numberInput("Max Radius", "maxRadius", "100", "Maximum amount of blocks away from the player.")}${checkboxField("Random Offset X", "randomOffsetX", "Picks a random east or west offset up to the X range.")}<div ng-if="effect.randomOffsetX">${numberInput("X Range", "xRange", "10", "Maximum random blocks east or west.")}</div>${checkboxField("Random Offset Y", "randomOffsetY", "Picks a random up or down offset up to the Y range.")}<div ng-if="effect.randomOffsetY">${numberInput("Y Range", "yRange", "0", "Maximum random blocks up or down.")}</div>${checkboxField("Random Offset Z", "randomOffsetZ", "Picks a random north or south offset up to the Z range.")}<div ng-if="effect.randomOffsetZ">${numberInput("Z Range", "zRange", "10", "Maximum random blocks north or south.")}</div></div></eos-container>`, { useRandomRange: false, offsetX: 0, offsetY: 0, offsetZ: 0, maxRadius: 100, randomOffsetX: false, xRange: 10, randomOffsetY: false, yRange: 0, randomOffsetZ: false, zRange: 10 }, "teleport_player", ["useRandomRange", "offsetX", "offsetY", "offsetZ", "maxRadius", "randomOffsetX", "xRange", "randomOffsetY", "yRange", "randomOffsetZ", "zRange"]));
@@ -2624,9 +2688,10 @@ function playerCodeInput() {
 }
 
 function makeSettingsPageController() {
+    const minecraftVersionsJson = JSON.stringify(MINECRAFT_VERSIONS);
     const body = `
                     const fallbackConfig = ${JSON.stringify(DEFAULT_CONFIG)};
-                    $scope.minecraftVersions = ["1.21.1 NeoForge"];
+                    $scope.minecraftVersions = ${minecraftVersionsJson};
                     $scope.config = angular.copy(fallbackConfig);
                     $scope.limitsText = "Request Limits From Server";
                     $scope.statsText = "Request Statistics From Server";
@@ -3024,7 +3089,7 @@ module.exports = {
         name: SCRIPT_NAME,
         description: "Minecraft effects for Firebot.",
         author: "CathieNova",
-        version: "0.0.37",
+        version: "0.0.40",
         firebotVersion: "5"
     }),
     getDefaultParameters: () => ({}),

@@ -19,7 +19,7 @@ https://cathienova.github.io/HavenFMI-Docs/
 ## Requirements
 
 * Firebot v5
-* Minecraft 1.21.1 server
+* Supported Forge or NeoForge Minecraft server
 * Haven Minecraft Integration server mod
 * A whitelisted Minecraft player with a Player Code
 
@@ -59,3 +59,11 @@ After that, join the server and run:
 Paste the code into **Haven Minecraft** in Firebot.
 
 Do not show your Player Code on stream.
+
+
+## Supported Minecraft versions
+
+- Forge 1.19.2
+- Forge 1.20.1
+- NeoForge 1.21.1
+- NeoForge 26.1.2
