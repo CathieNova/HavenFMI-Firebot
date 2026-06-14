@@ -1,0 +1,131 @@
+name: Server Mod Issue
+description: Report a bug, request a change, or ask for documentation related to HavenFMI-Server.
+title: "[Server Mod] "
+labels: []
+assignees: []
+body:
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue type
+      options:
+        - Bug
+        - Feature request
+        - Documentation
+        - Question
+    validations:
+      required: true
+
+  - type: input
+    id: server_mod_version
+    attributes:
+      label: Server mod version
+      placeholder: "Example: 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft_version
+    attributes:
+      label: Minecraft version
+      placeholder: "Example: 1.21.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mod_loader
+    attributes:
+      label: Mod loader
+      options:
+        - Forge
+        - NeoForge
+    validations:
+      required: true
+
+  - type: input
+    id: mod_loader_version
+    attributes:
+      label: Mod loader version
+      placeholder: "Example: 21.1.230"
+    validations:
+      required: true
+
+  - type: input
+    id: java_version
+    attributes:
+      label: Java version
+      placeholder: "Example: Java 21"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: server_type
+    attributes:
+      label: Server type
+      options:
+        - Dedicated server
+        - Singleplayer or LAN world
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened or what should change?
+      description: Describe the problem, requested feature, documentation change, or question.
+      placeholder: Explain the issue clearly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps that trigger the problem. Leave empty when not applicable.
+      placeholder: |
+        1.
+        2.
+        3.
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result or requested change
+      placeholder: Describe what should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server logs or crash report
+      description: Paste the relevant log output or crash report. Remove private information first.
+      render: text
+
+  - type: textarea
+    id: other_mods
+    attributes:
+      label: Other installed mods
+      description: List mods that may be related to the issue. Leave empty when not applicable.
+      placeholder: One mod per line.
+
+  - type: upload
+    id: files
+    attributes:
+      label: Screenshots or files
+      description: Upload screenshots, logs, crash reports, configuration files, or a small test ZIP.
+    validations:
+      required: false
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.json,.toml,.txt,.log,.zip,.gz"
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and did not find a matching report.
+          required: true
+        - label: I tested with the latest available version.
+          required: true
+        - label: I removed tokens, player codes, IP addresses, and other private information.
+          required: true

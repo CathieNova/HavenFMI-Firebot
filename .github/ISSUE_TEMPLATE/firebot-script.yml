@@ -1,0 +1,100 @@
+name: Firebot Script Issue
+description: Report a bug, request a change, or ask for documentation related to the Firebot script.
+title: "[Firebot Script] "
+labels: []
+assignees: []
+body:
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue type
+      options:
+        - Bug
+        - Feature request
+        - Documentation
+        - Question
+    validations:
+      required: true
+
+  - type: input
+    id: script_version
+    attributes:
+      label: Script version
+      description: Enter the Haven Minecraft Integration script version.
+      placeholder: "Example: 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: firebot_version
+    attributes:
+      label: Firebot version
+      placeholder: "Example: 5.66.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating_system
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened or what should change?
+      description: Describe the problem, requested feature, documentation change, or question.
+      placeholder: Explain the issue clearly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps that trigger the problem. Leave empty when not applicable.
+      placeholder: |
+        1.
+        2.
+        3.
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result or requested change
+      placeholder: Describe what should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Firebot logs
+      description: Paste the relevant Firebot log output. Remove private information first.
+      render: text
+
+  - type: upload
+    id: files
+    attributes:
+      label: Screenshots or files
+      description: Upload screenshots, exported Firebot setup files, or other relevant files.
+    validations:
+      required: false
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.json,.txt,.log,.zip"
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and did not find a matching report.
+          required: true
+        - label: I removed tokens, player codes, IP addresses, and other private information.
+          required: true
