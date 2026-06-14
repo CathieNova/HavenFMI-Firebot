@@ -171,8 +171,8 @@ const QUEST_ITEM_REWARD_EXAMPLES_1211 = [
 const QUEST_ITEM_REWARD_EXAMPLES_2612 = [
     { label: "Named item", note: "Put this in Item Data.", value: "[custom_name={text:'Viewer Stick',color:'gold'}]" },
     { label: "Lore", note: "Put this in Item Data.", value: "[lore=[{text:'Redeemed on stream',color:'gray'}]]" },
-    { label: "Enchantment", note: "Put this in Item Data.", value: "[enchantments={levels:{\"minecraft:unbreaking\":3}}]" },
-    { label: "Named enchanted item", note: "Put this in Item Data.", value: "[custom_name={text:'Viewer Pickaxe',color:'aqua'},enchantments={levels:{\"minecraft:efficiency\":5}}]" }
+    { label: "Enchantment", note: "Put this in Item Data.", value: "[enchantments={\"minecraft:unbreaking\":3}]" },
+    { label: "Named enchanted item", note: "Put this in Item Data.", value: "[custom_name={text:'Viewer Pickaxe',color:'aqua'},enchantments={\"minecraft:efficiency\":5}]" }
 ];
 
 const QUEST_COMMAND_REWARD_EXAMPLES = [
@@ -285,6 +285,515 @@ function normalizeConfig(config) {
         fetchedLimits: source.fetchedLimits && typeof source.fetchedLimits === "object" ? source.fetchedLimits : null,
         fetchedStats: source.fetchedStats && typeof source.fetchedStats === "object" ? source.fetchedStats : null
     };
+}
+
+function minecraftDataFamily(version) {
+    if (version === "Forge 1.19.2" || version === "Forge 1.20.1") {
+        return "legacy";
+    }
+    if (version === "NeoForge 26.1.2") {
+        return "inline";
+    }
+    return "json";
+}
+
+function splitDataParts(value, separator) {
+    const parts = [];
+    let start = 0;
+    let quote = "";
+    let escaped = false;
+    let braces = 0;
+    let brackets = 0;
+    let parentheses = 0;
+    for (let index = 0; index < value.length; index++) {
+        const character = value[index];
+        if (quote) {
+            if (escaped) {
+                escaped = false;
+            } else if (character === "\\") {
+                escaped = true;
+            } else if (character === quote) {
+                quote = "";
+            }
+            continue;
+        }
+        if (character === "'" || character === '"') {
+            quote = character;
+        } else if (character === "{") {
+            braces++;
+        } else if (character === "}") {
+            braces--;
+        } else if (character === "[") {
+            brackets++;
+        } else if (character === "]") {
+            brackets--;
+        } else if (character === "(") {
+            parentheses++;
+        } else if (character === ")") {
+            parentheses--;
+        } else if (character === separator && braces === 0 && brackets === 0 && parentheses === 0) {
+            parts.push(value.slice(start, index).trim());
+            start = index + 1;
+        }
+    }
+    parts.push(value.slice(start).trim());
+    return parts.filter(Boolean);
+}
+
+function findDataSeparator(value, separators) {
+    let quote = "";
+    let escaped = false;
+    let braces = 0;
+    let brackets = 0;
+    let parentheses = 0;
+    for (let index = 0; index < value.length; index++) {
+        const character = value[index];
+        if (quote) {
+            if (escaped) {
+                escaped = false;
+            } else if (character === "\\") {
+                escaped = true;
+            } else if (character === quote) {
+                quote = "";
+            }
+            continue;
+        }
+        if (character === "'" || character === '"') {
+            quote = character;
+        } else if (character === "{") {
+            braces++;
+        } else if (character === "}") {
+            braces--;
+        } else if (character === "[") {
+            brackets++;
+        } else if (character === "]") {
+            brackets--;
+        } else if (character === "(") {
+            parentheses++;
+        } else if (character === ")") {
+            parentheses--;
+        } else if (braces === 0 && brackets === 0 && parentheses === 0 && separators.includes(character)) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+function unquoteData(value) {
+    const text = String(value || "").trim();
+    if (text.length < 2 || !((text[0] === "'" && text[text.length - 1] === "'") || (text[0] === '"' && text[text.length - 1] === '"'))) {
+        return text;
+    }
+    const quote = text[0];
+    let result = "";
+    for (let index = 1; index < text.length - 1; index++) {
+        const character = text[index];
+        if (character === "\\" && index + 1 < text.length - 1) {
+            const next = text[index + 1];
+            if (next === quote || next === "\\") {
+                result += next;
+                index++;
+                continue;
+            }
+        }
+        result += character;
+    }
+    return result;
+}
+
+function quoteData(value) {
+    return "'" + String(value == null ? "" : value).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+}
+
+function cleanDataKey(value) {
+    const key = unquoteData(value).trim();
+    return key.startsWith("minecraft:") ? key.slice("minecraft:".length) : key;
+}
+
+function parseDataEntries(value, opening, closing, separators) {
+    const text = String(value || "").trim();
+    if (!text.startsWith(opening) || !text.endsWith(closing)) {
+        return null;
+    }
+    return splitDataParts(text.slice(1, -1), ",").map(part => {
+        const index = findDataSeparator(part, separators);
+        if (index < 0) {
+            return { keyRaw: part, key: cleanDataKey(part), value: "" };
+        }
+        const keyRaw = part.slice(0, index).trim();
+        return { keyRaw, key: cleanDataKey(keyRaw), value: part.slice(index + 1).trim() };
+    });
+}
+
+function parseLooseData(value) {
+    const text = String(value || "").trim();
+    if (!text) {
+        return "";
+    }
+    if ((text[0] === "'" && text[text.length - 1] === "'") || (text[0] === '"' && text[text.length - 1] === '"')) {
+        const unquoted = unquoteData(text);
+        if ((unquoted.startsWith("{") && unquoted.endsWith("}")) || (unquoted.startsWith("[") && unquoted.endsWith("]"))) {
+            try {
+                return JSON.parse(unquoted);
+            } catch (error) {
+            }
+        }
+        return unquoted;
+    }
+    if (text.startsWith("{") && text.endsWith("}")) {
+        const object = {};
+        const entries = parseDataEntries(text, "{", "}", [":"]);
+        if (entries) {
+            entries.forEach(entry => {
+                object[unquoteData(entry.keyRaw)] = parseLooseData(entry.value);
+            });
+        }
+        return object;
+    }
+    if (text.startsWith("[") && text.endsWith("]")) {
+        return splitDataParts(text.slice(1, -1), ",").map(parseLooseData);
+    }
+    if (/^(true|false)$/i.test(text)) {
+        return text.toLowerCase() === "true";
+    }
+    if (/^-?\d+(?:\.\d+)?[bBsSlLfFdD]?$/.test(text)) {
+        return Number(text.replace(/[bBsSlLfFdD]$/, ""));
+    }
+    return text;
+}
+
+function stringifyInlineData(value) {
+    if (value === null || value === undefined) {
+        return "{}";
+    }
+    if (Array.isArray(value)) {
+        return "[" + value.map(stringifyInlineData).join(",") + "]";
+    }
+    if (typeof value === "object") {
+        return "{" + Object.entries(value).map(([key, item]) => (/^[A-Za-z0-9_.+-]+$/.test(key) ? key : quoteData(key)) + ":" + stringifyInlineData(item)).join(",") + "}";
+    }
+    if (typeof value === "number" || typeof value === "boolean") {
+        return String(value);
+    }
+    return quoteData(value);
+}
+
+function textComponentValue(value, family) {
+    const parsed = parseLooseData(value);
+    let component = parsed;
+    if (typeof component === "string") {
+        try {
+            component = JSON.parse(component);
+        } catch (error) {
+            component = { text: component };
+        }
+    }
+    if (family === "inline") {
+        return stringifyInlineData(component);
+    }
+    return quoteData(JSON.stringify(component));
+}
+
+function numericDataValue(value) {
+    return String(value || "0").trim().replace(/[bBsSlLfFdD]$/, "");
+}
+
+function enchantmentEntries(value) {
+    const outer = parseDataEntries(value, "{", "}", [":"]);
+    if (!outer) {
+        return [];
+    }
+    const levelsEntry = outer.find(entry => entry.key.toLowerCase() === "levels");
+    if (levelsEntry) {
+        return parseDataEntries(levelsEntry.value, "{", "}", [":"]) || [];
+    }
+    return outer.filter(entry => entry.key.toLowerCase() !== "show_in_tooltip");
+}
+
+function enchantmentComponentValue(entries, family) {
+    const levels = entries.map(entry => quoteData(unquoteData(entry.keyRaw)) + ":" + numericDataValue(entry.value)).join(",");
+    return family === "inline" ? "{" + levels + "}" : "{levels:{" + levels + "}}";
+}
+
+function legacyEnchantmentsToComponent(value, family) {
+    const text = String(value || "").trim();
+    if (!text.startsWith("[") || !text.endsWith("]")) {
+        return enchantmentComponentValue([], family);
+    }
+    const levels = [];
+    splitDataParts(text.slice(1, -1), ",").forEach(item => {
+        const entries = parseDataEntries(item, "{", "}", [":"]);
+        if (!entries) {
+            return;
+        }
+        const id = entries.find(entry => entry.key.toLowerCase() === "id");
+        const level = entries.find(entry => entry.key.toLowerCase() === "lvl" || entry.key.toLowerCase() === "level");
+        if (id && level) {
+            levels.push({ keyRaw: quoteData(unquoteData(id.value)), value: level.value });
+        }
+    });
+    return enchantmentComponentValue(levels, family);
+}
+
+function normalizeEnchantmentComponent(value, family) {
+    return enchantmentComponentValue(enchantmentEntries(value), family);
+}
+
+function componentEnchantmentsToLegacy(value) {
+    const levels = enchantmentEntries(value);
+    if (!levels.length) {
+        return "[]";
+    }
+    return "[" + levels.map(entry => "{id:" + quoteData(unquoteData(entry.keyRaw)) + ",lvl:" + numericDataValue(entry.value) + "s}").join(",") + "]";
+}
+
+function legacyItemDataToComponents(value, family) {
+    const entries = parseDataEntries(value, "{", "}", [":"]);
+    if (!entries) {
+        return value;
+    }
+    const components = [];
+    const custom = [];
+    entries.forEach(entry => {
+        const key = entry.key.toLowerCase();
+        if (key === "display") {
+            const display = parseDataEntries(entry.value, "{", "}", [":"]);
+            const remaining = [];
+            (display || []).forEach(displayEntry => {
+                const displayKey = displayEntry.key.toLowerCase();
+                if (displayKey === "name") {
+                    components.push("custom_name=" + textComponentValue(displayEntry.value, family));
+                } else if (displayKey === "lore") {
+                    const lore = String(displayEntry.value || "").trim();
+                    const values = lore.startsWith("[") && lore.endsWith("]") ? splitDataParts(lore.slice(1, -1), ",") : [];
+                    components.push("lore=[" + values.map(item => textComponentValue(item, family)).join(",") + "]");
+                } else if (displayKey === "color") {
+                    components.push("dyed_color=" + numericDataValue(displayEntry.value));
+                } else {
+                    remaining.push(displayEntry.keyRaw + ":" + displayEntry.value);
+                }
+            });
+            if (remaining.length) {
+                custom.push("display:{" + remaining.join(",") + "}");
+            }
+        } else if (key === "enchantments") {
+            components.push("enchantments=" + legacyEnchantmentsToComponent(entry.value, family));
+        } else if (key === "storedenchantments") {
+            components.push("stored_enchantments=" + legacyEnchantmentsToComponent(entry.value, family));
+        } else if (key === "unbreakable") {
+            components.push("unbreakable={}");
+        } else if (key === "damage") {
+            components.push("damage=" + numericDataValue(entry.value));
+        } else if (key === "custommodeldata") {
+            components.push("custom_model_data=" + numericDataValue(entry.value));
+        } else if (key === "repaircost") {
+            components.push("repair_cost=" + numericDataValue(entry.value));
+        } else if (key === "havenfmicomponents") {
+            const saved = parseDataEntries(entry.value, "{", "}", [":"]);
+            (saved || []).forEach(savedEntry => components.push(unquoteData(savedEntry.keyRaw) + "=" + savedEntry.value));
+        } else {
+            custom.push(entry.keyRaw + ":" + entry.value);
+        }
+    });
+    if (custom.length) {
+        components.push("custom_data={" + custom.join(",") + "}");
+    }
+    return components.length ? "[" + components.join(",") + "]" : "";
+}
+
+function normalizeComponentItemData(value, family) {
+    const entries = parseDataEntries(value, "[", "]", ["="]);
+    if (!entries) {
+        return value;
+    }
+    return "[" + entries.map(entry => {
+        const key = entry.key.toLowerCase();
+        const componentKey = key.startsWith("minecraft:") ? key.substring("minecraft:".length) : key;
+        let componentValue = entry.value;
+        if (componentKey === "custom_name" || componentKey === "item_name") {
+            componentValue = textComponentValue(componentValue, family);
+        } else if (componentKey === "lore") {
+            const lore = String(componentValue || "").trim();
+            const values = lore.startsWith("[") && lore.endsWith("]") ? splitDataParts(lore.slice(1, -1), ",") : [];
+            componentValue = "[" + values.map(item => textComponentValue(item, family)).join(",") + "]";
+        } else if (componentKey === "enchantments" || componentKey === "stored_enchantments") {
+            componentValue = normalizeEnchantmentComponent(componentValue, family);
+        }
+        return entry.keyRaw + "=" + componentValue;
+    }).join(",") + "]";
+}
+
+function componentItemDataToLegacy(value) {
+    const entries = parseDataEntries(value, "[", "]", ["="]);
+    if (!entries) {
+        return value;
+    }
+    const root = [];
+    const display = [];
+    const unknown = [];
+    entries.forEach(entry => {
+        const key = entry.key.toLowerCase();
+        const componentKey = key.startsWith("minecraft:") ? key.substring("minecraft:".length) : key;
+        if (componentKey === "custom_name" || componentKey === "item_name") {
+            const parsed = parseLooseData(entry.value);
+            const component = typeof parsed === "string" ? (() => { try { return JSON.parse(parsed); } catch (error) { return { text: parsed }; } })() : parsed;
+            display.push("Name:" + quoteData(JSON.stringify(component)));
+        } else if (componentKey === "lore") {
+            const lore = String(entry.value || "").trim();
+            const values = lore.startsWith("[") && lore.endsWith("]") ? splitDataParts(lore.slice(1, -1), ",") : [];
+            display.push("Lore:[" + values.map(item => {
+                const parsed = parseLooseData(item);
+                const component = typeof parsed === "string" ? (() => { try { return JSON.parse(parsed); } catch (error) { return { text: parsed }; } })() : parsed;
+                return quoteData(JSON.stringify(component));
+            }).join(",") + "]");
+        } else if (componentKey === "enchantments") {
+            root.push("Enchantments:" + componentEnchantmentsToLegacy(entry.value));
+        } else if (componentKey === "stored_enchantments") {
+            root.push("StoredEnchantments:" + componentEnchantmentsToLegacy(entry.value));
+        } else if (componentKey === "unbreakable") {
+            root.push("Unbreakable:1b");
+        } else if (componentKey === "damage") {
+            root.push("Damage:" + numericDataValue(entry.value));
+        } else if (componentKey === "custom_model_data" && !String(entry.value).trim().startsWith("{")) {
+            root.push("CustomModelData:" + numericDataValue(entry.value));
+        } else if (componentKey === "repair_cost") {
+            root.push("RepairCost:" + numericDataValue(entry.value));
+        } else if (componentKey === "dyed_color") {
+            display.push("color:" + numericDataValue(entry.value));
+        } else if (componentKey === "custom_data") {
+            const custom = parseDataEntries(entry.value, "{", "}", [":"]);
+            (custom || []).forEach(item => root.push(item.keyRaw + ":" + item.value));
+        } else {
+            unknown.push(quoteData(unquoteData(entry.keyRaw)) + ":" + entry.value);
+        }
+    });
+    if (display.length) {
+        root.unshift("display:{" + display.join(",") + "}");
+    }
+    if (unknown.length) {
+        root.push("HavenFMIComponents:{" + unknown.join(",") + "}");
+    }
+    return root.length ? "{" + root.join(",") + "}" : "";
+}
+
+function convertItemDataForVersion(value, version) {
+    const text = String(value || "").trim();
+    if (!text) {
+        return "";
+    }
+    const family = minecraftDataFamily(version);
+    if (family === "legacy") {
+        return text.startsWith("[") ? componentItemDataToLegacy(text) : text;
+    }
+    return text.startsWith("{") ? legacyItemDataToComponents(text, family) : normalizeComponentItemData(text, family);
+}
+
+function convertEntityDataForVersion(value, version) {
+    const family = minecraftDataFamily(version);
+    function convertStructured(text) {
+        const trimmed = String(text || "").trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            const entries = parseDataEntries(trimmed, "{", "}", [":"]);
+            if (!entries) {
+                return trimmed;
+            }
+            const hasItemId = entries.some(entry => entry.key.toLowerCase() === "id");
+            return "{" + entries.map(entry => {
+                let keyRaw = entry.keyRaw;
+                let itemValue = convertStructured(entry.value);
+                const key = entry.key.toLowerCase();
+                if (key === "customname") {
+                    itemValue = textComponentValue(entry.value, family === "inline" ? "inline" : "json");
+                }
+                if (hasItemId && key === "count") {
+                    keyRaw = family === "legacy" ? "Count" : "count";
+                    itemValue = family === "legacy" ? numericDataValue(entry.value) + "b" : numericDataValue(entry.value);
+                }
+                if (hasItemId && key === "tag" && family !== "legacy") {
+                    keyRaw = "components";
+                    const bracket = legacyItemDataToComponents(entry.value, family);
+                    const componentEntries = parseDataEntries(bracket, "[", "]", ["="]) || [];
+                    itemValue = "{" + componentEntries.map(component => quoteData("minecraft:" + component.key) + ":" + component.value).join(",") + "}";
+                } else if (hasItemId && key === "components") {
+                    const componentEntries = parseDataEntries(entry.value, "{", "}", [":"]) || [];
+                    const bracket = "[" + componentEntries.map(component => cleanDataKey(component.keyRaw) + "=" + component.value).join(",") + "]";
+                    if (family === "legacy") {
+                        keyRaw = "tag";
+                        itemValue = componentItemDataToLegacy(bracket);
+                    } else {
+                        itemValue = "{" + (parseDataEntries(normalizeComponentItemData(bracket, family), "[", "]", ["="]) || []).map(component => quoteData("minecraft:" + component.key) + ":" + component.value).join(",") + "}";
+                    }
+                }
+                return keyRaw + ":" + itemValue;
+            }).join(",") + "}";
+        }
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            if (/^\[[BILbil];/.test(trimmed)) {
+                return trimmed;
+            }
+            return "[" + splitDataParts(trimmed.slice(1, -1), ",").map(convertStructured).join(",") + "]";
+        }
+        return trimmed;
+    }
+    return convertStructured(String(value || "").trim());
+}
+
+function convertDataRows(value, converter) {
+    return String(value || "").split(/\r?\n/).map(line => {
+        const pipeIndex = findDataSeparator(line, ["|"]);
+        if (pipeIndex < 0) {
+            return line;
+        }
+        return line.slice(0, pipeIndex).trim() + " | " + converter(line.slice(pipeIndex + 1).trim());
+    }).join("\n");
+}
+
+function convertRewardItemsForVersion(value, version) {
+    return String(value || "").split(/\r?\n/).map(line => {
+        if (/^\s*command\b/i.test(line)) {
+            return line;
+        }
+        const pipeIndex = findDataSeparator(line, ["|"]);
+        if (pipeIndex < 0) {
+            return line;
+        }
+        return line.slice(0, pipeIndex).trim() + " | " + convertItemDataForVersion(line.slice(pipeIndex + 1).trim(), version);
+    }).join("\n");
+}
+
+function convertPayloadDataForVersion(action, data, version) {
+    const result = data && typeof data === "object" ? data : {};
+    if (action === "give_item" && result.itemData) {
+        result.itemData = convertItemDataForVersion(result.itemData, version);
+    }
+    if (action === "spawn_mob" && result.entityData) {
+        result.entityData = convertEntityDataForVersion(result.entityData, version);
+    }
+    if (action === "spawn_random_mob" && Array.isArray(result.mobEntries)) {
+        result.mobEntries = result.mobEntries.map(entry => ({ ...entry, entityData: convertEntityDataForVersion(entry && entry.entityData, version) }));
+    }
+    if (action === "start_quest") {
+        result.rewardItems = convertRewardItemsForVersion(result.rewardItems, version);
+        if (Array.isArray(result.objectives)) {
+            result.objectives = result.objectives.map(objective => {
+                const converted = { ...objective };
+                const questType = String(converted.questType || "");
+                if (converted.targetIds) {
+                    if (questType.startsWith("Kill Specific") || questType.startsWith("Deal Damage to Specific")) {
+                        converted.targetIds = convertDataRows(converted.targetIds, item => convertEntityDataForVersion(item, version));
+                    } else if (questType.startsWith("Craft Specific") || questType.startsWith("Pick Up Specific")) {
+                        converted.targetIds = convertDataRows(converted.targetIds, item => convertItemDataForVersion(item, version));
+                    }
+                }
+                return converted;
+            });
+            const first = result.objectives[0];
+            if (first) {
+                result.targetIds = first.targetIds;
+            }
+        }
+    }
+    return result;
 }
 
 function getConfigPath() {
@@ -865,6 +1374,7 @@ async function runMinecraftEffect(action, effect, keys, addData) {
     if (typeof addData === "function") {
         Object.assign(data, addData(effect, config));
     }
+    convertPayloadDataForVersion(action, data, config.minecraftVersion);
     try {
         await sendBridgeRequest({
             action,
@@ -2366,7 +2876,7 @@ function registerEffects() {
     ];
     const itemExamples2612 = [
         { label: "Named item", note: "Gives the item a colored custom name.", value: "[custom_name={text:'Viewer Gift',color:'gold'}]" },
-        { label: "Bonk stick", note: "Adds a name and knockback.", value: "minecraft:stick | [custom_name={text:'Bonk Stick',color:'red'},enchantments={levels:{\"minecraft:knockback\":2}}]" },
+        { label: "Bonk stick", note: "Adds a name and knockback.", value: "minecraft:stick | [custom_name={text:'Bonk Stick',color:'red'},enchantments={\"minecraft:knockback\":2}]" },
         { label: "Lore", note: "Adds one short lore line.", value: "[lore=[{text:'Redeemed on stream',color:'gray'}]]" }
     ];
     const itemIdExamples = [
@@ -2967,7 +3477,7 @@ function registerSettingsPage() {
 
                             <eos-container header="Minecraft" pad-top="true">
                                 <div class="hm-version-row">
-                                    <span class="hm-version-label">Minecraft Version${inlineTooltip("Used by the bridge to format version-specific data.")}</span>
+                                    <span class="hm-version-label">Minecraft Version${inlineTooltip("Automatically converts item and entity data to the selected Minecraft version before sending it to the server.")}</span>
                                     <dropdown-select options="minecraftVersions" selected="config.minecraftVersion"></dropdown-select>
                                 </div>
                                 ${playerCodeInput()}
