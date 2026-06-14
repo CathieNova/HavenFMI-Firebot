@@ -1,5 +1,9 @@
 # Haven Minecraft Integration Firebot Script
 
+![GitHub release](https://img.shields.io/github/v/release/CathieNova/HavenFMI-Firebot)
+![GitHub downloads](https://img.shields.io/github/downloads/CathieNova/HavenFMI-Firebot/total)
+![GitHub issues](https://img.shields.io/github/issues/CathieNova/HavenFMI-Firebot)
+
 Firebot startup script for Haven Minecraft Integration.
 
 It adds Minecraft effects, events, variables, filters, viewer quests, and settings to Firebot.
