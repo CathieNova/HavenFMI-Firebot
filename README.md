@@ -18,9 +18,9 @@ https://cathienova.github.io/HavenFMI-Docs/
 
 ## Requirements
 
-* Firebot v5
-* Supported Forge or NeoForge Minecraft server using the mod from https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-server
-* (Optional) Client Mod for showing Questbook and Quest Tracker in-game, from https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-client
+* [Firebot v5](https://firebot.app/)
+* Supported Forge or NeoForge Minecraft server using the mod from [Curseforge](https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-server)
+* (Optional) Client Mod for showing Questbook and Quest Tracker in-game, from [Curseforge](https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-client)
 
 ---
 
