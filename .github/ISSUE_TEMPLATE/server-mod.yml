@@ -116,7 +116,7 @@ body:
       description: Upload screenshots, logs, crash reports, configuration files, or a small test ZIP.
     validations:
       required: false
-      accept: ".png,.jpg,.jpeg,.gif,.webp,.json,.toml,.txt,.log,.zip,.gz"
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.json,.txt,.log,.zip,.gz"
 
   - type: checkboxes
     id: confirmations
