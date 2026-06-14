@@ -19,18 +19,17 @@ https://cathienova.github.io/HavenFMI-Docs/
 ## Requirements
 
 * Firebot v5
-* Supported Forge or NeoForge Minecraft server
-* Haven Minecraft Integration server mod
-* A whitelisted Minecraft player with a Player Code
+* Supported Forge or NeoForge Minecraft server using the mod from https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-server
+* (Optional) Client Mod for showing Questbook and Quest Tracker in-game, from https://www.curseforge.com/minecraft/mc-mods/haven-firebot-minecraft-integration-client
 
 ---
 
 ## Install
 
-1. Download `havenMinecraftIntegration.js` from Releases.
+1. Download `havenMinecraftIntegration.js` from [**Releases**](https://github.com/CathieNova/HavenFMI-Firebot/releases).
 2. Put the script in your Firebot startup scripts directory.
 3. Restart Firebot.
-4. Open **Haven Minecraft** in Firebot.
+4. Open **Haven Minecraft** tab in sidebar in Firebot.
 5. Set the Minecraft server address.
 6. Paste your Player Code.
 7. Save the settings.

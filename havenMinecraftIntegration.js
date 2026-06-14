@@ -3599,7 +3599,7 @@ module.exports = {
         name: SCRIPT_NAME,
         description: "Minecraft effects for Firebot.",
         author: "CathieNova",
-        version: "0.0.40",
+        version: "1.0.0",
         firebotVersion: "5"
     }),
     getDefaultParameters: () => ({}),
